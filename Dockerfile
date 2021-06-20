@@ -2,7 +2,8 @@ FROM ubuntu:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt update 
+RUN apt update
+RUN apt upgrade -y
 
 RUN apt install -y python3 python3-netifaces python3-prettytable python3-certifi \
 python3-chardet python3-future python3-idna python3-netaddr python3-pyparsing python3-six\
@@ -92,14 +93,12 @@ rm -f go-pillage-registries_1.0_Linux_x86_64.tar.gz
 #Get oc 3.10
 RUN curl -OL https://github.com/openshift/origin/releases/download/v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && \
 tar -xzvf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit/oc /usr/local/bin/oc310 && \
-chmod +x /usr/local/bin/oc310 
-#&& rm -rf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit && rm -f openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz
+chmod +x /usr/local/bin/oc310 && rm -rf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit && rm -f openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz
 
 #Get oc 3.11
 RUN curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
 tar -xzvf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc  /usr/local/bin && \
-chmod +x /usr/local/bin/oc 
-#&& rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
+chmod +x /usr/local/bin/oc && rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
 
 # Conmachi
 COPY /bin/conmachi /usr/local/bin/
