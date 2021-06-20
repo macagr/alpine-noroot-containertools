@@ -1,10 +1,10 @@
-Alpine Container Tools Docker Image
+Ubuntu Container Tools - No Root Docker Image
 --
 
-I had a need for an image with some container tools in it which doesn't run as root. So this is it :)
-
-Based on alpine to keep the image nice and small.
-
+This is an image based on the alpine-noroot-containertools from Raesene. It is a
+fork where I have based myself on Ubuntu to add a few more tools that I needed
+to work. In particular the OpenShift Client tools.  I have also added a few
+tools and all the versions of kubectl that I could.
 
 
 Tools installed
@@ -17,8 +17,9 @@ Tools installed
 - boltbrowser
 - oc
 - amicontained
+- kube-hunter
 
 
 Running Instructions
 --
-`docker run -it raesene/alpine-noroot-containertools /bin/sh`
+`docker run -it macagr/ubuntu-noroot-containertools /bin/sh`

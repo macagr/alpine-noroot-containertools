@@ -1,20 +1,44 @@
-FROM alpine:3.12
+FROM ubuntu:latest
 
-RUN apk --update add python3 py3-netifaces py3-prettytable py3-certifi \
-py3-chardet py3-future py3-idna py3-netaddr py3-parsing py3-six\
- nmap nmap-scripts curl tcpdump bind-tools jq nmap-ncat bash && \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update 
+
+RUN apt install -y python3 python3-netifaces python3-prettytable python3-certifi \
+python3-chardet python3-future python3-idna python3-netaddr python3-pyparsing python3-six\
+ nmap curl tcpdump dnsutils jq ncat openssh-server python3-pip && \
 rm -rf /var/cache/apk/*
 
 #Kubernetes 1.8 for old clusters
-RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.8.4/bin/linux/amd64/kubectl && \
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.8.4/bin/linux/amd64/kubectl && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl18
 
 #Kubernetes 1.12 for medium old clusters
-RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.12.8/bin/linux/amd64/kubectl && \
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.8/bin/linux/amd64/kubectl && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl112
 
-#Kubernetes 1.16 for newer clusters
-RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.16.7/bin/linux/amd64/kubectl && \
+#Kubernetes 1.16 for newer medium old clusters
+RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.16.7/bin/linux/amd64/kubectl && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl116
+
+#Kubernetes 1.17 for newer medium old clusters
+RUN curl -LO https://dl.k8s.io/release/v1.17.17/bin/linux/amd64/kubectl && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl117
+
+#Kubernetes 1.18 for newer medium old clusters
+RUN curl -LO https://dl.k8s.io/release/v1.18.20/bin/linux/amd64/kubectl && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl118
+
+#Kubernetes 1.19 for newer medium old clusters
+RUN curl -LO https://dl.k8s.io/release/v1.19.11/bin/linux/amd64/kubectl && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl119
+
+#Kubernetes 1.20 for newer clusters
+RUN curl -LO https://dl.k8s.io/release/v1.20.7/bin/linux/amd64/kubectl && \
+chmod +x kubectl && mv kubectl /usr/local/bin/kubectl120
+
+#Kubernetes 1.21.2 for newest clusters
+RUN curl -LO https://dl.k8s.io/release/v1.21.2/bin/linux/amd64/kubectl && \
 chmod +x kubectl && mv kubectl /usr/local/bin/kubectl
 
 #Get docker we're not using the apk as it includes the server binaries that we don't need
@@ -47,7 +71,7 @@ RUN curl -OL https://github.com/aquasecurity/kubectl-who-can/releases/download/v
 tar -xzvf kubectl-who-can_linux_x86_64.tar.gz && cp kubectl-who-can /usr/local/bin && rm -f kubectl-who-can_linux_x86_64.tar.gz
 
 #Get Kube-Hunter (removed for now as it was breaking the build)
-#RUN pip3 install kube-hunter
+RUN pip3 install kube-hunter
 
 #Get Helm2
 RUN curl -OL https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && \
@@ -65,21 +89,29 @@ RUN curl -OL https://github.com/nccgroup/go-pillage-registries/releases/download
 tar -xzvf go-pillage-registries_1.0_Linux_x86_64.tar.gz && mv go-pillage-registries /usr/local/bin && \
 rm -f go-pillage-registries_1.0_Linux_x86_64.tar.gz
 
-#Get oc
+#Get oc 3.10
 RUN curl -OL https://github.com/openshift/origin/releases/download/v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && \
-tar -xzvf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit/oc /usr/local/bin && \
-chmod +x /usr/local/bin/oc && rm -rf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && rm -f openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz
+tar -xzvf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit/oc /usr/local/bin/oc310 && \
+chmod +x /usr/local/bin/oc310 
+#&& rm -rf openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit && rm -f openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz
 
+#Get oc 3.11
+RUN curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
+tar -xzvf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc  /usr/local/bin && \
+chmod +x /usr/local/bin/oc 
+#&& rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
+
+# Conmachi
 COPY /bin/conmachi /usr/local/bin/
 
 #Having a setuid shell could be handy
 RUN cp /bin/bash /bin/setuidbash && chmod 4755 /bin/setuidbash
 
 #Create a group for our user
-RUN addgroup -g 1001 -S tester
+RUN addgroup --gid 1001 --system tester
 
 #create our new user
-RUN adduser -S --ingroup tester --uid 1001 tester
+RUN adduser --system --ingroup tester --uid 1001 tester
 
 #set the workdir, why not
 WORKDIR /home/tester
