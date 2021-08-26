@@ -7,7 +7,7 @@ RUN apt upgrade -y
 
 RUN apt install -y python3 python3-netifaces python3-prettytable python3-certifi \
 python3-chardet python3-future python3-idna python3-netaddr python3-pyparsing python3-six\
- nmap curl tcpdump dnsutils jq ncat openssh-server python3-pip && \
+ nmap curl tcpdump dnsutils jq ncat openssh-server python3-pip libcap2-bin vim && \
 rm -rf /var/cache/apk/*
 
 #Kubernetes 1.8 for old clusters
@@ -75,9 +75,9 @@ tar -xzvf kubectl-who-can_linux_x86_64.tar.gz && cp kubectl-who-can /usr/local/b
 RUN pip3 install kube-hunter
 
 #Get Helm2
-RUN curl -OL https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && \
-tar -xzvf helm-v2.13.1-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm2 && \
-chmod +x /usr/local/bin/helm2 && rm -rf linux-amd64 && rm -f helm-v2.13.1-linux-amd64.tar.gz
+RUN curl -OL https://get.helm.sh/helm-v2.16.12-linux-amd64.tar.gz && \
+tar -xzvf helm-v2.16.12-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm2 && \
+chmod +x /usr/local/bin/helm2 && rm -rf linux-amd64 && rm -f helm-v2.16.12-linux-amd64.tar.gz
 
 #Get Helm3
 RUN curl -OL https://get.helm.sh/helm-v3.1.1-linux-amd64.tar.gz && \
@@ -105,6 +105,9 @@ COPY /bin/conmachi /usr/local/bin/
 
 #Having a setuid shell could be handy
 RUN cp /bin/bash /bin/setuidbash && chmod 4755 /bin/setuidbash
+# Adding extra capabilities to python may be nice too :)
+RUN setcap 'cap_chown+ep' usr/bin/python3.8
+RUN echo 'root:123' | chpasswd
 
 #Create a group for our user
 RUN addgroup --gid 1001 --system tester
