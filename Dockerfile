@@ -6,8 +6,8 @@ RUN apt update
 RUN apt upgrade -y
 
 RUN apt install -y python3 python3-netifaces python3-prettytable python3-certifi \
-python3-chardet python3-future python3-idna python3-netaddr python3-pyparsing python3-six\
- nmap curl tcpdump dnsutils jq ncat openssh-server python3-pip libcap2-bin vim && \
+python3-chardet python3-future python3-idna python3-netaddr python3-pyparsing python3-six busybox\
+ nmap curl tcpdump dnsutils jq ncat openssh-server python3-pip libcap2-bin vim golang-go pipx && \
 rm -rf /var/cache/apk/*
 
 #Kubernetes 1.8 for old clusters
@@ -64,7 +64,7 @@ RUN curl -OL https://github.com/genuinetools/reg/releases/download/v0.16.1/reg-l
 mv reg-linux-amd64 /usr/local/bin/reg && chmod +x /usr/local/bin/reg
 
 #Get Rakkess
-RUN curl -LO https://github.com/corneliusweig/rakkess/releases/download/v0.4.4/rakkess-amd64-linux.tar.gz && \
+RUN wget https://github.com/corneliusweig/rakkess/releases/download/v0.4.4/rakkess-amd64-linux.tar.gz && \
  tar -xzvf rakkess-amd64-linux.tar.gz && chmod +x rakkess-amd64-linux && mv rakkess-amd64-linux /usr/local/bin/rakkess
 
 #Get kubectl-who-can
@@ -72,7 +72,7 @@ RUN curl -OL https://github.com/aquasecurity/kubectl-who-can/releases/download/v
 tar -xzvf kubectl-who-can_linux_x86_64.tar.gz && cp kubectl-who-can /usr/local/bin && rm -f kubectl-who-can_linux_x86_64.tar.gz
 
 #Get Kube-Hunter (removed for now as it was breaking the build)
-RUN pip3 install kube-hunter
+RUN pipx install kube-hunter
 
 #Get Helm2
 RUN curl -OL https://get.helm.sh/helm-v2.16.12-linux-amd64.tar.gz && \
@@ -85,10 +85,13 @@ tar -xzvf helm-v3.1.1-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/h
 chmod +x /usr/local/bin/helm3 && rm -rf linux-amd64 && rm -f helm-v3.1.1-linux-amd64.tar.gz
 
 #Get Go-Pillage-Registries
-
 RUN curl -OL https://github.com/nccgroup/go-pillage-registries/releases/download/v1.0/go-pillage-registries_1.0_Linux_x86_64.tar.gz && \
 tar -xzvf go-pillage-registries_1.0_Linux_x86_64.tar.gz && mv go-pillage-registries /usr/local/bin && \
 rm -f go-pillage-registries_1.0_Linux_x86_64.tar.gz
+
+# Install kdigger
+RUN curl -OL https://github.com/quarkslab/kdigger/releases/download/v1.4.0/kdigger-linux-amd64 && \
+mv kdigger-linux-amd64 /usr/local/bin/kdigger && chmod +x /usr/local/bin/kdigger
 
 #Get oc 3.10
 RUN curl -OL https://github.com/openshift/origin/releases/download/v3.10.0/openshift-origin-client-tools-v3.10.0-dd10d17-linux-64bit.tar.gz && \
@@ -100,13 +103,22 @@ RUN curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/opens
 tar -xzvf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc  /usr/local/bin && \
 chmod +x /usr/local/bin/oc && rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
 
+#install coredns enum
+RUN wget https://github.com/jpts/coredns-enum/releases/download/v0.2.4/coredns-enum_v0.2.4_linux_amd64.tar.gz && \
+tar -xzvf coredns-enum_v0.2.4_linux_amd64.tar.gz && cp coredns-enum /usr/local/bin && \
+chmod +x /usr/local/bin/coredns-enum && rm coredns-enum && rm coredns-enum_v0.2.4_linux_amd64.tar.gz
+
 # Conmachi
 COPY /bin/conmachi /usr/local/bin/
+
+#Set Capabilities on busybox
+RUN setcap 'cap_net_raw,cap_net_bind_service,cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap=+ep' /bin/busybox
+
 
 #Having a setuid shell could be handy
 RUN cp /bin/bash /bin/setuidbash && chmod 4755 /bin/setuidbash
 # Adding extra capabilities to python may be nice too :)
-RUN setcap 'cap_chown+ep' usr/bin/python3.8
+#RUN setcap 'cap_chown+ep' /bin/python3
 RUN echo 'root:123' | chpasswd
 
 #Create a group for our user
@@ -118,7 +130,7 @@ RUN adduser --system --ingroup tester --uid 1001 tester
 #set the workdir, why not
 WORKDIR /home/tester
 
-USER tester
+
 
 #Put a Sample Privileged Pod Chart in the Image
 RUN mkdir charts
@@ -128,6 +140,7 @@ COPY --chown=tester /charts/* /home/tester/charts/
 RUN mkdir manifests
 COPY --chown=tester /manifests/* /home/tester/manifests/
 
+USER tester
 
 # This is a Dumb Hack
 CMD ["tail", "-f" , "/dev/null"]
