@@ -100,13 +100,23 @@ chmod +x /usr/local/bin/oc310 && rm -rf openshift-origin-client-tools-v3.10.0-dd
 
 #Get oc 3.11
 RUN curl -OL https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
-tar -xzvf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc  /usr/local/bin && \
-chmod +x /usr/local/bin/oc && rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
+tar -xzvf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && cp openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc  /usr/local/bin/oc311 && \
+chmod +x /usr/local/bin/oc311 && rm -f openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && rm -rf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit
 
 #install coredns enum
 RUN wget https://github.com/jpts/coredns-enum/releases/download/v0.2.4/coredns-enum_v0.2.4_linux_amd64.tar.gz && \
 tar -xzvf coredns-enum_v0.2.4_linux_amd64.tar.gz && cp coredns-enum /usr/local/bin && \
 chmod +x /usr/local/bin/coredns-enum && rm coredns-enum && rm coredns-enum_v0.2.4_linux_amd64.tar.gz
+
+#install peirates
+RUN wget https://github.com/inguardians/peirates/releases/download/v1.1.25/peirates-linux-amd64.tar.xz && \
+tar -xvf peirates-linux-amd64.tar.xz && cp peirates-linux-amd64/peirates /usr/local/bin/ && chmod +x /usr/local/bin/peirates && \
+rm -rf peirates-linux-amd64 && rm peirates-linux-amd64.tar.xz
+
+#install kubehound
+RUN wget https://github.com/DataDog/KubeHound/releases/latest/download/kubehound-$(uname -o | sed 's/GNU\///g')-$(uname -m) -O kubehound && \
+cp kubehound /usr/local/bin/ && chmod +x /usr/local/bin/kubehound && rm kubehound
+
 
 # Conmachi
 COPY /bin/conmachi /usr/local/bin/
@@ -121,16 +131,19 @@ RUN cp /bin/bash /bin/setuidbash && chmod 4755 /bin/setuidbash
 #RUN setcap 'cap_chown+ep' /bin/python3
 RUN echo 'root:123' | chpasswd
 
+# homedir
+RUN mkdir -p /home/tester
+
 #Create a group for our user
-RUN addgroup --gid 1001 --system tester
+RUN addgroup --gid 1001220000 --system tester
 
 #create our new user
-RUN adduser --system --ingroup tester --uid 1001 tester
+RUN adduser --home /home/tester --system --ingroup tester --uid 1001220000 tester
+
+RUN chown -R tester:tester /home/tester/
 
 #set the workdir, why not
 WORKDIR /home/tester
-
-
 
 #Put a Sample Privileged Pod Chart in the Image
 RUN mkdir charts
